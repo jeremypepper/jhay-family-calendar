@@ -13,14 +13,14 @@ html {
 }
 
 #clock {
-    font-size: 6rem;
+    font-size: 8rem;
     cursor: pointer;
     line-height: 0.75;
 }
 
 #date {
-    font-size: 0.9rem;
-    opacity: 0.8;
+    font-size: 2rem;
+    opacity: 1;
 }
 
 [data-theme="dark"] {
@@ -135,11 +135,21 @@ main {
     font-size: 9px;
 }
 .hourly-line-chart-axis {
-    stroke: #383835;
+    stroke: #d1d1d1;
     stroke-width: 1;
 }
 
 .latlon-inputs {
     display: flex;
     gap: 0.5rem;
+}
+
+#bongocat {
+  position: fixed;
+  top: calc(100vh - 97px);
+  right: -6px;
+  width: 100px;
+  height: 100px;
+  transform: rotate(-15deg);
+  z-index: 2;
 }

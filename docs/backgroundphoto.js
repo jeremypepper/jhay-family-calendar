@@ -1,5 +1,18 @@
 const UNSPLASH_API_BASE = "https://api.unsplash.com";
 const UNSPLASH_APP_NAME = "jhay-calendar";
+
+// Downloads the image fully via a plain <img>-style load (not fetch(), so
+// the response ends up in the browser's normal image cache) and resolves
+// once it's actually decoded and ready to paint.
+function preloadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+    img.src = url;
+  });
+}
+
 async function setBackgroundPhoto() {
   const params = new URLSearchParams({
     collections: window.APP_CONFIG.UNSPLASH_COLLECTION_ID,
@@ -14,6 +27,16 @@ async function setBackgroundPhoto() {
   }
 
   const photo = await res.json();
+
+  // Fully download the image before swapping it in, so the change is an
+  // instant paint instead of the background showing blank/blend-only while
+  // it loads in lazily. Setting the same URL afterward is a cache hit.
+  try {
+    await preloadImage(photo.urls.full);
+  } catch (e) {
+    console.error("Failed to preload background photo, applying anyway", e);
+  }
+
   document.body.style.backgroundImage = `url("${photo.urls.full}")`;
   document.body.style.backgroundColor = getBlendColor(photo.color)
   document.body.style.backgroundBlendMode = "multiply"
