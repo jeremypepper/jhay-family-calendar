@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Proxies the API Ninjas Geocoding API (zip code -> lat/long) so the API key
+  never reaches the browser.
+
+Parameters:
+  ApiNinjasKey:
+    Type: String
+    NoEcho: true
+    Description: API key for api-ninjas.com (entered at deploy time, never committed)
+
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: python3.13
+    MemorySize: 128
+
+Resources:
+  GeocodeApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - "http://localhost"
+          - "http://localhost:8080"
+          - "https://jhay.net"
+          - "https://calendar.jhay.net"
+        AllowMethods:
+          - GET
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+
+  GeocodeProxyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handler
+      CodeUri: .
+      Environment:
+        Variables:
+          API_NINJAS_KEY: !Ref ApiNinjasKey
+      Events:
+        Geocode:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref GeocodeApi
+            Path: /geocode
+            Method: GET
+
+Outputs:
+  GeocodeApiUrl:
+    Description: Base URL for the geocode proxy API
+    Value: !Sub "https://${GeocodeApi}.execute-api.${AWS::Region}.amazonaws.com"

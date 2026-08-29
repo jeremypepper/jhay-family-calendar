@@ -1,0 +1,119 @@
+html {
+    overflow: clip;
+}
+.top-right-header {
+    position: fixed;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+    z-index: 10;
+}
+
+#clock {
+    font-size: 6rem;
+    cursor: pointer;
+    line-height: 0.75;
+}
+
+#date {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+[data-theme="dark"] {
+    --pico-color: #fafafa;
+    --pico-h3-color: #fff;
+}
+
+html, body {
+    min-height: 100%;
+}
+
+main {
+    display: flow-root;
+    padding: 0;
+}
+
+#cal-section, #weather-section {
+    box-sizing: border-box;
+    float: left;
+    margin: 32px;
+    margin-top: 0;
+}
+
+#cal-section {
+    width: calc(70% - 64px);
+    overflow: hidden;
+}
+
+#weather-section {
+    width: calc(30% - 64px);
+    text-align: right;
+    margin-top: 125px;
+}
+
+#cal-section ol {
+    list-style: none;
+    padding-left: 0;
+}
+#cal-section > ol {
+    column-count: 2;
+    column-gap: 3rem;
+    /* auto (not the default "balance") fills the first column completely
+       before spilling into the second, so overflow is always the latest
+       days in the list, never a re-shuffled mix. */
+    column-fill: auto;
+    height: 100%;
+}
+#cal-section li {
+    list-style: none;
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+}
+#cal-section li li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+}
+.event-time {
+    flex-shrink: 0;
+    width: 4.5rem;
+    text-align: right;
+    margin-left: -8px;
+}
+.event-summary {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#cal-section h3 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#photo-attribution {
+    position: fixed;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    padding: 0.2rem 0.5rem;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    font-size: 0.75rem;
+    border-radius: 0.25rem;
+    text-decoration: none;
+}
+
+.hourly-weather-entry img {
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+.latlon-inputs {
+    display: flex;
+    gap: 0.5rem;
+}

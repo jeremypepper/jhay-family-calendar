@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Proxies the Google Maps Platform Weather API so the API key never reaches
+  the browser. Exploratory alternative to weather-lambda (NWS-based) --
+  not wired into the frontend yet.
+
+Parameters:
+  GoogleWeatherApiKey:
+    Type: String
+    NoEcho: true
+    Description: API key for the Google Maps Platform Weather API (entered at deploy time, never committed)
+
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: python3.13
+    MemorySize: 128
+
+Resources:
+  GoogleWeatherApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - "http://localhost"
+          - "http://localhost:8080"
+          - "https://jhay.net"
+          - "https://calendar.jhay.net"
+        AllowMethods:
+          - GET
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+
+  GoogleWeatherProxyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handler
+      CodeUri: .
+      Environment:
+        Variables:
+          GOOGLE_WEATHER_API_KEY: !Ref GoogleWeatherApiKey
+      Events:
+        Current:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref GoogleWeatherApi
+            Path: /current
+            Method: GET
+        ForecastDaily:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref GoogleWeatherApi
+            Path: /forecast/daily
+            Method: GET
+        ForecastHourly:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref GoogleWeatherApi
+            Path: /forecast/hourly
+            Method: GET
+
+Outputs:
+  GoogleWeatherApiUrl:
+    Description: Base URL for the Google weather proxy API
+    Value: !Sub "https://${GoogleWeatherApi}.execute-api.${AWS::Region}.amazonaws.com"

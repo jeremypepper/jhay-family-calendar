@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Calendar</title>
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+    <main class="">
+        <section class="top-right-header">
+            <span id="clock"></span>
+            <span id="date"></span>
+        </section>
+    
+      <section id="auth-section">
+        <button id="connect-btn">Connect Google Calendar</button>
+      </section>
+      <section id="calendars-section">
+        <form id="calendars-form">
+            <ul id="calendar-list"></ul>
+            <fieldset>
+                <legend>Location</legend>
+                <label for="zip-input">Zip code</label>
+                <input type="text" id="zip-input" name="zip" placeholder="e.g. 95123" pattern="[0-9]{5}" maxlength="5">
+                <label>Lat / Long</label>
+                <div class="latlon-inputs">
+                    <input type="number" id="lat-input" name="lat" placeholder="Latitude" step="any">
+                    <input type="number" id="lon-input" name="lon" placeholder="Longitude" step="any">
+                </div>
+            </fieldset>
+            <button id="cal-select-btn" type="submit" style="display: none;">OK</button>
+        </form>
+      </section>
+    
+    
+    <section id="cal-section">
+    </section>
+    <section id="weather-section"></section>
+    
+    <script src="config.js"></script>
+    <script src="clock.js"></script>
+    <script src="backgroundphoto.js"></script>
+    <script src="weather.js"></script>
+    <script src="calendar.js"></script>
+    <script src="auth.js"></script>
+</body>
+</html>
