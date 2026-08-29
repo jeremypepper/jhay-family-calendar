@@ -37,22 +37,23 @@ main {
     padding: 0;
 }
 
-#cal-section, #weather-section {
+#cal-section {
     box-sizing: border-box;
     float: left;
     margin: 32px;
     margin-top: 0;
-}
-
-#cal-section {
     width: calc(70% - 64px);
     overflow: hidden;
 }
 
 #weather-section {
-    width: calc(30% - 64px);
+    position: fixed;
+    /* Clears #photo-attribution, which sits fixed at bottom/right 0.5rem too. */
+    bottom: 2.5rem;
+    right: 0.5rem;
+    width: 300px;
     text-align: right;
-    margin-top: 125px;
+    z-index: 5;
 }
 
 #cal-section ol {
@@ -108,9 +109,34 @@ main {
     text-decoration: none;
 }
 
-.hourly-weather-entry img {
-    margin-left: 8px;
-    margin-right: 8px;
+.hourly-line-chart {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+.hourly-line-chart-line {
+    fill: none;
+    stroke: #d1d1d1;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.hourly-line-chart-dot {
+    fill: #727373;
+    stroke: rgba(0, 0, 0, 0.45);
+    stroke-width: 1;
+}
+.hourly-line-chart-value {
+    fill: #fafafa;
+    font-size: 11px;
+}
+.hourly-line-chart-hour {
+    fill: #fafafa;
+    font-size: 9px;
+}
+.hourly-line-chart-axis {
+    stroke: #383835;
+    stroke-width: 1;
 }
 
 .latlon-inputs {

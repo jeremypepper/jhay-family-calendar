@@ -108,7 +108,7 @@ function dayToWeather(day) {
   };
 }
 
-const HOURLY_FORECAST_COUNT = 12;
+const HOURLY_FORECAST_COUNT = 16;
 
 async function fetchHourlyForecastHours() {
   if (!hasLocation()) return [];
@@ -139,31 +139,130 @@ async function renderWeatherSection() {
     return [];
   });
 
-  for (const hour of hours) {
-    const condition = hour.weatherCondition;
-    const div = document.createElement("div");
-    div.className = "hourly-weather-entry";
+  renderHourlyLineChart(weatherDOM, hours);
+}
 
-    const timeSpan = document.createElement("span");
-    timeSpan.className = "hour";
-    timeSpan.textContent = formatHour(hour.displayDateTime.hours);
+// Minimalist single-series line chart: no axes/gridlines/legend (one series
+// needs none), a thin line, and direct labels only at the low/high points --
+// everything else (most hour ticks) stays out rather than labeling every dot.
+const SVG_NS = "http://www.w3.org/2000/svg";
+const CHART_WIDTH = 280;
+const CHART_HEIGHT = 164;
+const CHART_PADDING_X = 20;
+// Extra room up top for the icon + value label stacked above a high point.
+const CHART_PADDING_TOP = 50;
+const CHART_PADDING_BOTTOM = 24;
+const CHART_ICON_SIZE = 16;
 
-    const img = document.createElement("img");
-    img.src = `${condition.iconBaseUri}.svg`;
-    img.alt = condition.description.text;
-    img.title = condition.description.text;
-    img.width = 32;
-    img.height = 32;
+function renderHourlyLineChart(weatherDOM, hours) {
+  if (hours.length === 0) return;
 
-    const tempSpan = document.createElement("span");
-    tempSpan.className = "temp";
-    tempSpan.textContent = `${Math.round(hour.temperature.degrees)}°${hour.temperature.unit === "FAHRENHEIT" ? "F" : "C"}`;
+  const plotWidth = CHART_WIDTH - CHART_PADDING_X * 2;
+  const plotHeight = CHART_HEIGHT - CHART_PADDING_TOP - CHART_PADDING_BOTTOM;
+  const temps = hours.map((h) => h.temperature.degrees);
+  const minTemp = Math.min(...temps);
+  const maxTemp = Math.max(...temps);
+  const tempRange = maxTemp - minTemp || 1;
 
-    div.appendChild(timeSpan);
-    div.appendChild(img);
-    div.appendChild(tempSpan);
-    weatherDOM.appendChild(div);
-  }
+  const points = hours.map((h, i) => ({
+    x: CHART_PADDING_X + (hours.length === 1 ? 0 : (i / (hours.length - 1)) * plotWidth),
+    y: CHART_PADDING_TOP + plotHeight - ((h.temperature.degrees - minTemp) / tempRange) * plotHeight,
+    hour: h.displayDateTime.hours,
+    temp: Math.round(h.temperature.degrees),
+    iconUrl: `${h.weatherCondition.iconBaseUri}.svg`,
+    description: h.weatherCondition.description.text,
+  }));
+
+  const minIndex = temps.indexOf(minTemp);
+  const maxIndex = temps.indexOf(maxTemp);
+
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`);
+  svg.setAttribute("class", "hourly-line-chart");
+
+  const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+  const path = document.createElementNS(SVG_NS, "path");
+  path.setAttribute("d", pathD);
+  path.setAttribute("class", "hourly-line-chart-line");
+  svg.appendChild(path);
+
+  const lastIndex = points.length - 1;
+  // Targets ~5-6 hour ticks regardless of how many points there are, so a
+  // denser chart (more hours) doesn't crowd its axis labels into each other.
+  const hourTickInterval = Math.max(1, Math.ceil(points.length / 5));
+
+  // A hairline baseline above the hour labels, spanning first-to-last point,
+  // with a vertical drop from the first/last point's actual position on the
+  // curve down through the baseline to its time label -- ties the point to
+  // its time directly, rather than just marking the chart's time extent.
+  const axisY = CHART_HEIGHT - CHART_PADDING_BOTTOM + 6;
+  const axisLine = document.createElementNS(SVG_NS, "line");
+  axisLine.setAttribute("x1", points[0].x);
+  axisLine.setAttribute("y1", axisY);
+  axisLine.setAttribute("x2", points[lastIndex].x);
+  axisLine.setAttribute("y2", axisY);
+  axisLine.setAttribute("class", "hourly-line-chart-axis");
+  svg.appendChild(axisLine);
+
+  [points[0], points[lastIndex]].forEach((p) => {
+    const tick = document.createElementNS(SVG_NS, "line");
+    tick.setAttribute("x1", p.x);
+    tick.setAttribute("y1", p.y);
+    tick.setAttribute("x2", p.x);
+    tick.setAttribute("y2", axisY + 5);
+    tick.setAttribute("class", "hourly-line-chart-axis");
+    svg.appendChild(tick);
+  });
+
+  points.forEach((p, i) => {
+    const isLabeled = i === minIndex || i === maxIndex || i === 0 || i === lastIndex;
+
+    const dot = document.createElementNS(SVG_NS, "circle");
+    dot.setAttribute("cx", p.x);
+    dot.setAttribute("cy", p.y);
+    dot.setAttribute("r", isLabeled ? 4 : 2.5);
+    dot.setAttribute("class", "hourly-line-chart-dot");
+    svg.appendChild(dot);
+
+    if (isLabeled) {
+      const label = document.createElementNS(SVG_NS, "text");
+      label.setAttribute("x", p.x);
+      // Both labels sit above their dot -- the min point is always close to
+      // the bottom edge (right where the hour ticks live), so "below" risked
+      // colliding with them; "above" has room in every case that matters here.
+      label.setAttribute("y", p.y - 10);
+      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("class", "hourly-line-chart-value");
+      label.textContent = `${p.temp}°`;
+      svg.appendChild(label);
+
+      const icon = document.createElementNS(SVG_NS, "image");
+      icon.setAttribute("href", p.iconUrl);
+      icon.setAttribute("x", p.x - CHART_ICON_SIZE / 2);
+      icon.setAttribute("y", p.y - 10 - 9 - 6 - CHART_ICON_SIZE);
+      icon.setAttribute("width", CHART_ICON_SIZE);
+      icon.setAttribute("height", CHART_ICON_SIZE);
+      const iconTitle = document.createElementNS(SVG_NS, "title");
+      iconTitle.textContent = p.description;
+      icon.appendChild(iconTitle);
+      svg.appendChild(icon);
+    }
+
+    // Hour ticks stay sparse so denser charts don't crowd their labels --
+    // this is axis text, not a per-point value label. Start/end always show
+    // regardless of the interval, so the chart's time range is never unclear.
+    if (i % hourTickInterval === 0 || i === 0 || i === lastIndex) {
+      const hourLabel = document.createElementNS(SVG_NS, "text");
+      hourLabel.setAttribute("x", p.x);
+      hourLabel.setAttribute("y", CHART_HEIGHT - 6);
+      hourLabel.setAttribute("text-anchor", "middle");
+      hourLabel.setAttribute("class", "hourly-line-chart-hour");
+      hourLabel.textContent = formatHour(p.hour).replace(" ", "");
+      svg.appendChild(hourLabel);
+    }
+  });
+
+  weatherDOM.appendChild(svg);
 }
 
 const WEATHER_REFRESH_INTERVAL_MS = 60 * 60 * 1000;
