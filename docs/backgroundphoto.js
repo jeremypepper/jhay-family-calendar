@@ -13,6 +13,11 @@ function preloadImage(url) {
   });
 }
 
+const BACKGROUND_PHOTO_STORAGE_KEY = "background_photo_data";
+
+// Fetches a brand-new random photo from Unsplash, caches it, and applies it.
+// This is the only path that spends an Unsplash API call -- called on page
+// load only when there's no cached photo yet, and always by the hourly timer.
 async function setBackgroundPhoto() {
   const params = new URLSearchParams({
     collections: window.APP_CONFIG.UNSPLASH_COLLECTION_ID,
@@ -27,7 +32,25 @@ async function setBackgroundPhoto() {
   }
 
   const photo = await res.json();
+  localStorage.setItem(BACKGROUND_PHOTO_STORAGE_KEY, JSON.stringify(photo));
+  await applyBackgroundPhoto(photo);
+}
 
+function loadCachedBackgroundPhoto() {
+  const raw = localStorage.getItem(BACKGROUND_PHOTO_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (e) {
+    console.error("Failed to parse cached background photo", e);
+    return null;
+  }
+}
+
+// Renders a given photo object -- shared by both a fresh fetch and a cached
+// one from localStorage, since Unsplash's tracking/attribution requirements
+// apply every time the photo is displayed, not just when it's first fetched.
+async function applyBackgroundPhoto(photo) {
   // Fully download the image before swapping it in, so the change is an
   // instant paint instead of the background showing blank/blend-only while
   // it loads in lazily. Setting the same URL afterward is a cache hit.
@@ -109,5 +132,13 @@ function renderAttribution(photo) {
 
 const BACKGROUND_REFRESH_INTERVAL_MS = 60 * 60 * 1000;
 
-setBackgroundPhoto();
+const cachedBackgroundPhoto = loadCachedBackgroundPhoto();
+if (cachedBackgroundPhoto) {
+  applyBackgroundPhoto(cachedBackgroundPhoto);
+} else {
+  setBackgroundPhoto();
+}
+
+// The timer always fetches fresh -- it's the only thing that's supposed to
+// spend a new Unsplash call once a cached photo already covers page load.
 setInterval(setBackgroundPhoto, BACKGROUND_REFRESH_INTERVAL_MS);

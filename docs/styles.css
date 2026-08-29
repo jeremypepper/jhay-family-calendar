@@ -13,7 +13,7 @@ html {
 }
 
 #clock {
-    font-size: 8rem;
+    font-size: 7rem;
     cursor: pointer;
     line-height: 0.75;
 }
@@ -146,10 +146,10 @@ main {
 
 #bongocat {
   position: fixed;
-  top: calc(100vh - 97px);
+  top: calc(100vh - 82px);
   right: -6px;
   width: 100px;
   height: 100px;
-  transform: rotate(-15deg);
+  transform: rotate(-17deg);
   z-index: 2;
 }
