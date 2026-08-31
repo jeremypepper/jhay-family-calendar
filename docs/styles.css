@@ -24,7 +24,7 @@ html {
 }
 
 [data-theme="dark"] {
-    --pico-color: #fafafa;
+    --pico-color: #fff;
     --pico-h3-color: #fff;
 }
 

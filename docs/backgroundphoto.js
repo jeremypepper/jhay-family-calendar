@@ -59,8 +59,8 @@ async function applyBackgroundPhoto(photo) {
   } catch (e) {
     console.error("Failed to preload background photo, applying anyway", e);
   }
-
-  document.body.style.backgroundImage = `url("${photo.urls.full}")`;
+  const url = photo.urls.raw + `&w=1024&h=600&auto=true&fit=fill`
+  document.body.style.backgroundImage = `url("${url}")`;
   document.body.style.backgroundColor = getBlendColor(photo.color)
   document.body.style.backgroundBlendMode = "multiply"
   document.body.style.backgroundSize = "cover";
@@ -142,3 +142,4 @@ if (cachedBackgroundPhoto) {
 // The timer always fetches fresh -- it's the only thing that's supposed to
 // spend a new Unsplash call once a cached photo already covers page load.
 setInterval(setBackgroundPhoto, BACKGROUND_REFRESH_INTERVAL_MS);
+window.setBackgroundPhoto = setBackgroundPhoto
